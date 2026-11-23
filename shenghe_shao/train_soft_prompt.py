@@ -42,7 +42,10 @@ def main():
     ap.add_argument("--max_steps", type=int, default=0, help="0 = no limit")
     ap.add_argument("--time_budget_min", type=float, default=0, help="0 = no limit")
     ap.add_argument("--save_at_min", default="", help="e.g. 10,20,40")
+    ap.add_argument("--save_at_examples", default="", help="data budgets, e.g. 1000,2000,4000")
     ap.add_argument("--grad_checkpointing", action="store_true", help="trade speed for much lower memory")
+    ap.add_argument("--untimed_warmup_batches", type=int, default=3,
+                    help="fwd+bwd passes before the clock starts (kernel JIT/autotune); no update")
     ap.add_argument("--log_every", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
@@ -69,6 +72,7 @@ def main():
     opt = torch.optim.AdamW([soft.embedding], lr=args.lr, weight_decay=0.0)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / max(1, args.warmup_steps)))
     save_at = sorted(float(x) for x in args.save_at_min.split(",") if x.strip())
+    save_at_ex = sorted(int(x) for x in args.save_at_examples.split(",") if x.strip())
     budget_s = args.time_budget_min * 60
 
     def save(tag, elapsed, step, seen, tokens):
@@ -76,6 +80,13 @@ def main():
         soft.save(path, model=args.model, n_tokens=args.n_tokens, step=step,
                   train_time_sec=elapsed, examples_seen=seen, tokens_seen=tokens)
         print(f"[save] {path}")
+
+    for k in range(args.untimed_warmup_batches):
+        batch = data[k * args.batch_size: (k + 1) * args.batch_size]
+        input_ids, mask, labels = build_train_batch(tok, batch, args.max_len, device)
+        forward_with_soft_prompt(model, soft, input_ids, mask, labels).loss.backward()
+        soft.embedding.grad = None
+    print(f"untimed warmup: {args.untimed_warmup_batches} batches done")
 
     log = open(os.path.join(args.out_dir, "train_log.jsonl"), "w")
     torch.cuda.synchronize()
@@ -112,6 +123,8 @@ def main():
 
             while save_at and elapsed >= save_at[0] * 60:
                 save(f"{save_at.pop(0):g}min", elapsed, step, seen, tokens)
+            while save_at_ex and seen >= save_at_ex[0]:
+                save(f"{save_at_ex.pop(0)}ex", elapsed, step, seen, tokens)
             if (args.max_steps and step >= args.max_steps) or (budget_s and elapsed >= budget_s):
                 done = True
                 break
