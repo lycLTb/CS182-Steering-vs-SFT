@@ -42,6 +42,7 @@ def main():
     ap.add_argument("--max_steps", type=int, default=0, help="0 = no limit")
     ap.add_argument("--time_budget_min", type=float, default=0, help="0 = no limit")
     ap.add_argument("--save_at_min", default="", help="e.g. 10,20,40")
+    ap.add_argument("--grad_checkpointing", action="store_true", help="trade speed for much lower memory")
     ap.add_argument("--log_every", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
@@ -52,6 +53,9 @@ def main():
     device = "cuda"
 
     model, tok = load_model(args.model, device)
+    if args.grad_checkpointing:
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        model.train()  # HF only checkpoints in train mode; weights stay frozen (no dropout in Qwen)
     data = load_jsonl(args.train_file)
     soft = SoftPrompt.from_text(model, tok, args.n_tokens, args.init_text).to(device)
     n_params = soft.embedding.numel()
