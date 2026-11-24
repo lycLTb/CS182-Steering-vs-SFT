@@ -1,0 +1,7 @@
+{
+  "input": "/Users/matthewyoung/cs182_runs/dom_l11/budget_10tflops/test_xstest_dom.jsonl",
+  "judge_model": "deepseek-flash",
+  "n": 450,
+  "ASR": 0.035,
+  "over_refusal": 0.284
+}
