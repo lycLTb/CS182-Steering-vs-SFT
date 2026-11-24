@@ -64,7 +64,9 @@ def load_questions(data_dir):
     ref_col = next((c for c in ("reference", "references") if c in df.columns), None)
     qs = []
     for _, r in df.iterrows():
-        ref = list(r[ref_col]) if ref_col is not None and r[ref_col] is not None and len(r[ref_col]) else None
+        val = r[ref_col] if ref_col is not None else None
+        # questions without a reference come through as NaN / None
+        ref = list(val) if hasattr(val, "__len__") and not isinstance(val, str) and len(val) else None
         qs.append({"id": str(r[id_col]), "category": r.get("category", ""), "turns": list(r[turns_col]), "reference": ref})
     print(f"{len(qs)} questions")
     return qs
