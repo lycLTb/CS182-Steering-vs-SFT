@@ -33,9 +33,10 @@ def end_of_turn(tok) -> str:
     return "<|im_end|>" if "<|im_end|>" in tok.get_vocab() else tok.eos_token
 
 
-def format_prompt(tok, user_text: str) -> str:
-    """Chat-format a single user turn, ending with the assistant header (thinking off)."""
-    msgs = [{"role": "user", "content": user_text}]
+def format_prompt(tok, user_text) -> str:
+    """Chat-format a user turn (str) or a whole conversation (list of {role, content}
+    ending with a user turn), ending with the assistant header (thinking off)."""
+    msgs = [{"role": "user", "content": user_text}] if isinstance(user_text, str) else user_text
     return tok.apply_chat_template(
         msgs, tokenize=False, add_generation_prompt=True, enable_thinking=False
     )
