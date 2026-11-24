@@ -4,6 +4,8 @@
 .env
 # model weights (scripts/export_base.py, SFT/LoRA outputs)
 models/
+# LoRA training runs (adapters, logs; scripts/train_lora.py)
+runs/
 # regenerable with scripts/prepare_data.py (WildJailbreak is gated — don't redistribute)
 data/*.jsonl
 # generations / judge outputs contain gated prompts and harmful text — keep local; summaries (*.json) are committed
