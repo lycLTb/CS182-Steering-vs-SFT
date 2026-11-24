@@ -43,9 +43,10 @@ for name in "${!SP[@]}"; do
     [ -f "$f.summary.json" ] || \
       python judge.py --input "$f.jsonl" --judge_model deepseek-flash
   done
-  [ -f "$OUT/mmlu_${name}.json" ] || \
+  # file name records the question count (n0 = full MMLU) so dev subsets are never reused for test
+  [ -f "$OUT/mmlu_${name}_n${MMLU_LIMIT}.json" ] || \
     python eval_mmlu.py --model "$M" ${SP[$name]} --mmlu_dir "$WORK/cs182_assets/data/mmlu" \
-      --output "$OUT/mmlu_${name}.json" --limit "$MMLU_LIMIT"
+      --output "$OUT/mmlu_${name}_n${MMLU_LIMIT}.json" --limit "$MMLU_LIMIT"
   if [ "$MODE" = test ]; then
     [ -f "$OUT/mtb_${name}.jsonl" ] || \
       python mt_bench.py gen --model "$M" ${SP[$name]} --data_dir "$WORK/cs182_assets/data/mt_bench" \
@@ -56,9 +57,9 @@ for name in "${!SP[@]}"; do
 done
 
 echo "================ RESULTS ($MODE) ================"
-python - "$OUT" $SETS <<'EOF'
+python - "$OUT" "$MMLU_LIMIT" $SETS <<'EOF'
 import json, sys, os
-out, sets = sys.argv[1], sys.argv[2:]
+out, mmlu_n, sets = sys.argv[1], sys.argv[2], sys.argv[3:]
 names = sorted({f.split("_")[0] for f in os.listdir(out)
                  if f.endswith(".summary.json") and not f.startswith("mtb_")})
 cols = []
@@ -71,7 +72,7 @@ for n in names:
         p = f"{out}/{n}_{s}.summary.json"
         v = json.load(open(p)).get(k) if os.path.exists(p) else None
         row += f"{v:>18.3f}" if v is not None else f"{'-':>18}"
-    m = f"{out}/mmlu_{n}.json"
+    m = f"{out}/mmlu_{n}_n{mmlu_n}.json"
     row += f"{json.load(open(m))['accuracy']:>8.3f}" if os.path.exists(m) else f"{'-':>8}"
     t = f"{out}/mtb_{n}.summary.json"
     row += f"{json.load(open(t))['overall']:>9.2f}" if os.path.exists(t) else f"{'-':>9}"
