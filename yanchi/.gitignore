@@ -1,0 +1,14 @@
+# Self-contained: this folder is copied into a shared repo.
+# secrets
+.deepseek_api_key
+.env
+# model weights (scripts/export_base.py, SFT/LoRA outputs)
+models/
+# regenerable with scripts/prepare_data.py (WildJailbreak is gated — don't redistribute)
+data/*.jsonl
+# generations / judge outputs contain gated prompts and harmful text — keep local; summaries (*.json) are committed
+outputs/
+*.log
+__pycache__/
+*.pyc
+*:Zone.Identifier
