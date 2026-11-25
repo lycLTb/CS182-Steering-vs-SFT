@@ -127,7 +127,7 @@ the DoM direction at the same layer ($|\cos| \le 0.03$ from 256 examples on), so
 directly finds a different direction from the mean activation difference.
 
 **Limitations.** Results come from a single training seed, and the LLM judge has not been validated
-against human labels. The compute figures are analytic estimates.
+against human labels. The compute figures are analytic estimates. Experiments on hyperparameter selection and more random seeds are running.
 
 ### Appendix
 
