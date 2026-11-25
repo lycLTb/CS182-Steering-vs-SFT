@@ -1,0 +1,35 @@
+# Merge rubric (decisions)
+
+- Judge name: "DeepSeek-V4.1-Flash" vs "DeepSeek Flash rubric" → use **DeepSeek-V4.1-Flash**.
+- Terminology: dev / development / validation; "ASR" → use **validation**; spell out **attack success rate**.
+- Duplicated shared setup (model, data, decoding, judge, loss) → **merge, write once**.
+- Over-refusal definition and error-bar methods differ across members → state in **Limitations / work in progress** that these are not yet aligned.
+- Proposal lists 3 methods, soft prompt missing → **add soft prompt**.
+- Proposal promised training time / memory / latency / search budgets → **use FLOPs instead**.
+- Qwen3.5-2B extension not done → **ignore**.
+- DoM figures (`dom_figures/`) missing → **leave a placeholder**.
+- Base mismatch on MMLU / validation (45.6 vs 50.6 vs 47.9; DoM 16.0/12.5 vs LoRA 19.5/13.0) → attribute to **platform differences**.
+- Base mismatch on HarmBench / WildJailbreak attack success rate (32.0 vs 15.0; 41.8 vs 22.2) → list as a **to-be-aligned issue in Limitations / work in progress**.
+- Learned-steering rerun uses cosine decay (checkpoint ≠ stopped run) → **ignore**.
+- Learned-steering data exposure differs (truncation, bs=1, 2 epochs) → **still compare in the same figure**.
+- Four different FLOPs conventions → **expected; keep four formulas**.
+- Budgets differ across methods → **expected; align where possible**. DoM drawn as a **two-piece step function**.
+- Test-set evaluation incomplete (LoRA validation only, learned steering preliminary, DoM partial, MT-Bench soft prompt only) → **fine**.
+- Figure style mismatches → **ignore for now**.
+- Merged figures x axis → **log scale**.
+- DoM in compute figure → **step function**.
+- Training time / memory / latency → **add if all methods have them**.
+- Headline figure (opening of paper): four methods together, x = training FLOPs, y = benchmark metric; at least attack success rate and MMLU.
+- MMLU panel: DoM has no data; soft prompt vs learned steering protocols differ (0-shot full vs 5-shot 500) → **do not note in caption**.
+- Headline figure: 2 or 3 panels → **3 panels** (attack success rate, over-refusal, MMLU), where data exist.
+- LoRA has no test results for the attack success rate panel → **add a bullet in Limitations / work in progress**.
+- Base points differ across methods (HarmBench 15 vs 32) → **each line starts from its own base**.
+- Per-method hyperparameter search budgets subsection in shared setup → **drop**.
+- References section → **required** at the end.
+- FLOPs: attention/mixer term → **drop** (not counted for any method); other shared-assumption differences → **leave as is** (recorded in open_questions.md).
+- Skipped / open questions → **never mention in the paper** (no defensive writing).
+- Citation format → **same as the project proposal** (numbered [n], "A. Author et al. Title. Venue, Year. arXiv:ID.").
+- Headline figure drafted: `figures/headline_vs_flops.png` (script `scripts/plot_headline.py`); panels = HarmBench attack success rate, XSTest-safe over-refusal, MMLU; LoRA to be added once test results exist.
+- Merge structure (Abstract / Intro / Related work / Methods / Shared setup / Results / Limitations / Conclusion / Appendix / References) → **approved**.
+- Headline figure caption → **explain the work-in-progress state** (no LoRA, dashed lines, mismatched compute); see `figures/headline_vs_flops.caption.md`.
+- References → **all verified online** (2026-11-24); see verification notes in chat.
