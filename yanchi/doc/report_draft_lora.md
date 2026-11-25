@@ -1,7 +1,7 @@
 # LoRA SFT — draft sections (Yanchi)
 
 > Draft. `[IN PROGRESS]` marks parts that depend on runs not yet done. `[SHARED]` marks text that should
-> move to the common setup section if teammates agree. All numbers below are on the **dev** split.
+> move to the common setup section if teammates agree. All numbers below are on the **validation** split.
 
 ---
 
@@ -14,15 +14,13 @@ and Biderman et al. [2024] and Schulman et al. [2025] report that the MLP blocks
 attention projections. Adapting "all linear layers" has since become the default.
 
 This guidance does not carry over directly to our model. Qwen3.5-0.8B is a hybrid: 18 of its 24 layers are
-Gated DeltaNet (GDN) layers, a linear-attention mixer with a recurrent state, and only 6 use softmax
+Gated DeltaNet (GDN) layers, and only 6 use softmax
 attention. For state space models, Galim et al. [2025] show that LoRA works on the linear projections
 around the recurrent core but not on the recurrent parameters themselves, and that input-side methods such
 as prefix tuning are weak because they reduce to tuning the initial state. The closest study to ours is
 Borobia et al. [2026], who compare LoRA placements on the same model, Qwen3.5-0.8B, with the same rank and
 learning rate. On math, code and chat fine-tuning they find that adapting only the 6 softmax-attention
-layers works best, and that adapting the GDN layers or adding the MLP blocks hurts. Their tasks, schedule
-(3 epochs, cosine) and evaluation differ from ours, so we test their recommendation on safety tuning
-(Section X.3).
+layers works best, and that adapting the GDN layers or adding the MLP blocks hurts.
 
 ---
 
@@ -38,10 +36,7 @@ $$W' = W + \tfrac{\alpha}{r} BA, \qquad B \in \mathbb{R}^{d_\text{out}\times r},
 with $B$ initialized to zero, so training starts from the base model. We use $r = 16$, $\alpha = 32$. After
 training, $BA$ is merged into $W$, so inference cost is unchanged.
 
-**Where to apply LoRA.** We compare three placements (Table 1). Following Borobia et al. [2026], we name them
-by component type. We exclude the GDN gate projections, whose 16-dimensional outputs are no larger than the
-rank, the short convolutions, and the embedding matrix, which is tied to the output head. Unless stated
-otherwise we use **all-linear**, the best placement in Section X.3.
+**Where to apply LoRA.** We compare three placements (Table 1). Following Borobia et al. [2026], we name them by component type. 
 
 *Table 1: LoRA placements.*
 
@@ -68,20 +63,69 @@ number of tokens. The LoRA term adds about 1% over the soft prompt at the same n
 
 ### X.1 Setup
 `[SHARED]` Model, data, benchmarks, judge and decoding settings are given in Section Y. Hyperparameters and
-placements are chosen on the dev split (400 prompts, 100 for each of vanilla/adversarial × harmful/benign).
+placements are chosen on the validation split (400 prompts, 100 for each of vanilla/adversarial × harmful/benign).
 The test sets are evaluated once, after all choices are fixed. Error bars are 95% Wilson score intervals.
 We use these instead of ±1 SE because several rates are near 0%, where the normal approximation breaks down.
+We use lr 2e-4 for all LoRA runs, chosen by a small, non-exhaustive learning-rate search on the validation split
+(Appendix A). `[IN PROGRESS]` The search will be repeated for the final placement.
 
-### X.2 Learning rate
+### X.2 Where to apply LoRA
+Figure 1 compares the three placements across budgets, all using lr 2e-4 and see the same data in the same order.
+
+![](../figures/lora_dev_vs_flops.png)
+
+*Figure 1: Validation results vs. training compute for three LoRA placements. (a) Attack success rate on harmful
+prompts (n = 200). (b) Refusal rate on adversarial benign prompts (n = 100), the category where over-refusal
+concentrates. (c) MMLU accuracy (n = 1000). The point at 0 PFLOPs is the base model. Error bars are 95%
+Wilson intervals over evaluation prompts. `[IN PROGRESS]` attn+GDN has so far been
+evaluated only at 1000, 2000 and 4000 examples; its segment from the base model to 1000 examples is not
+measured.*
+
+### X.3 Results
+`[IN PROGRESS]` Test-set results (HarmBench, WildJailbreak, XSTest, MMLU, MT-Bench) for the final
+configuration, plotted with the other methods in the shared figure.
+
+On the validation split, three patterns stand out (Figure 1).
+
+1. **Safety is cheap:** all-linear LoRA cuts the attack success rate from 19.5% to 0% within 128 examples
+   (0.14 PFLOPs), and more compute does not lower it further.
+2. **Over-refusal first rises, then falls:** refusal on adversarial benign prompts jumps from 20% to 90% at
+   128 examples and declines to about 30% by 2000, so most of the extra budget goes to reducing over-refusal
+   rather than improving safety.
+3. **Softmax-only learns more slowly:** its attack success rate is still 7.0% at 128 examples, where
+   all-linear reaches 0%, and its adversarial-benign refusal peaks later and remains at 55% at 2000 examples
+   against 30% for all-linear (attn+GDN, at 39%, is within noise of all-linear). This is the opposite of
+   Borobia et al. [2026] on the same model, which we suspect reflects the different task (safety vs. math,
+   code and chat).
+
+Figure 2 shows the training loss. Training runs for one epoch, so every batch is unseen when its loss is
+computed, and the training loss can be seen as a held-out loss.
+
+![](../figures/lora_train_loss.png)
+
+*Figure 2: Training loss for the three LoRA target-module configurations at lr 2e-4 (one batch of 8 logged
+every 10 steps, 5-point moving average).*
+
+### X.4 Limitations
+- The learning rate was selected on a different placement than the final one (re-sweep in progress), and the
+  MMLU threshold in the selection rule was set after seeing results.
+- LoRA was tuned over more configurations than the soft prompt (6 learning rates and 3 placements, against
+  4 configurations).
+- Refusal and harmfulness are labeled by the DeepSeek API rather than the classifiers recommended by the
+  original benchmarks, so absolute numbers are not directly comparable to published results.
+
+---
+
+## Appendix A: Learning-rate search
 The learning rate is the only optimizer hyperparameter we tune. We swept six values, roughly evenly
-spaced on a log scale, using the attn+GDN placement. We kept configurations with dev ASR ≤ 5% and MMLU
+spaced on a log scale, using the attn+GDN placement. We kept configurations with a validation attack success rate ≤ 5% and MMLU
 no more than 3 points below the base model (≈2 standard errors at n = 1000). Among those, we chose the one
 with the lowest over-refusal. The MMLU threshold was added after seeing the 5e-4 and 1e-3 results.
 
-*Table 2: Learning-rate sweep (attn+GDN, dev). Each cell gives 2000 / 4000 examples. Base: ASR 19.5,
+*Table A1: Learning-rate sweep (attn+GDN, validation split). Each cell gives 2000 / 4000 examples. Base: attack success rate 19.5,
 adversarial-benign refusal 20, MMLU 47.9.*
 
-| lr | ASR (%) | Adv.-benign refusal (%) | MMLU (%) |
+| lr | Attack success rate (%) | Adv.-benign refusal (%) | MMLU (%) |
 |---|---|---|---|
 | 2e-5 | 3.5 / 2.0 | 55 / 50 | 50.3 / 50.4 |
 | 5e-5 | 1.5 / 0.0 | 55 / 49 | 51.4 / 51.8 |
@@ -96,70 +140,3 @@ it falls to near chance (25%). We use 2e-4.
 
 `[IN PROGRESS]` The sweep used the attn+GDN placement, but our final placement is all-linear. We will
 repeat the sweep on all-linear.
-
-### X.3 Where to apply LoRA
-Figure 1 compares the three placements across budgets. All use lr 2e-4 and see the same data in the same
-order, so each budget is a paired comparison.
-
-![](../figures/lora_dev_vs_flops.png)
-
-*Figure 1: Dev results vs. training compute for three LoRA placements. (a) Attack success rate on harmful
-prompts (n = 200). (b) Refusal rate on adversarial benign prompts (n = 100), the category where over-refusal
-concentrates. (c) MMLU accuracy (n = 1000). The point at 0 PFLOPs is the base model. Error bars are 95%
-Wilson intervals over evaluation prompts, i.e. the sampling error of the finite evaluation set. Each
-configuration was trained once, so seed variance is not included. `[IN PROGRESS]` attn+GDN has so far been
-evaluated only at 1000, 2000 and 4000 examples; its segment from the base model to 1000 examples is not
-measured.*
-
-Unlike on Borobia et al.'s tasks, softmax-only is the *worst* placement for safety tuning. At 2000 examples
-all three reach near-zero ASR, but adversarial-benign refusal is 55% for softmax-only, 39% for attn+GDN and
-30% for all-linear. Softmax-only also removes attacks more slowly: at 64 examples its ASR is 13.5%, against
-7.0% for all-linear. Adding the MLP blocks costs about 1% more compute and does not reduce MMLU beyond noise.
-We therefore use all-linear.
-
-Two caveats apply. The learning rate was tuned for attn+GDN. Softmax-only has a fifth of its parameters
-and may need a larger rate, so this comparison may understate it. Each configuration was also run with a
-single seed.
-
-### X.4 Results
-`[IN PROGRESS]` Test-set results (HarmBench, WildJailbreak, XSTest, MMLU, MT-Bench) for the final
-configuration, plotted with the other methods in the shared figure.
-
-On dev, three patterns stand out (Figure 1).
-
-1. **Safety is cheap.** All-linear LoRA cuts ASR from 19.5% to 0% within 128 examples (0.14 PFLOPs).
-   Additional compute does not improve ASR further.
-2. **Over-refusal first rises, then falls.** Refusal on adversarial benign prompts jumps from 20% to 90%
-   at 128 examples, then declines to about 30% by 2000 examples. Refusal on vanilla benign prompts is
-   smaller and also transient: 20% at 64 examples and 24% at 512, back to 4–6% from 2000 examples on
-   (base 6%). The model first learns to refuse anything wrapped in a role-play or jailbreak-style framing,
-   and only with more data learns to tell harmful from benign content inside that framing. Most of the
-   extra training budget therefore goes to reducing over-refusal, not to improving safety.
-3. **Refusals collapse to a fixed phrase.** From 128 examples on, the median refusal is 44–48 characters,
-   a single sentence such as "I'm sorry, but I can't assist with that request." The training refusals are much longer and more
-   varied (median ≈1000 characters).
-
-Figure 2 shows the training loss. Training runs for one epoch, so every batch is unseen when its loss is
-computed, and the training loss doubles as a held-out loss. All runs see identical batches, so the shared
-spikes reflect batch content. The gap between curves is a paired difference. Loss differences between
-placements are small (mean over steps 10–250: 1.42 softmax-only, 1.40 attn+GDN, 1.39 all-linear), even
-though their over-refusal differs clearly.
-
-![](../figures/lora_train_loss.png)
-
-*Figure 2: Training loss for the three LoRA target-module configurations at lr 2e-4 (one batch of 8 logged
-every 10 steps, 5-point moving average).*
-
-### X.5 Limitations
-- One seed per configuration, so seed-to-seed variance is not measured; the error bars cover only
-  evaluation-set sampling error. Dev has 100 prompts per category, so differences under about 10 points in a
-  single category are not resolved.
-- The learning rate was selected on a different placement than the final one (re-sweep in progress), and the
-  MMLU threshold in the selection rule was set after seeing results.
-- LoRA was tuned over more configurations than the soft prompt (6 learning rates and 3 placements, against
-  4 configurations).
-- The LLM judge has not been validated against human labels. It labels refusal and harmfulness in one call
-  with reasoning disabled. In a separate test, a judge with reasoning disabled showed a position bias on
-  XSTest-style labels.
-- For softmax-only, gradients need not flow below the first adapted layer (layer 3). Its true backward cost is
-  therefore about 6% below the reported FLOPs.

@@ -112,7 +112,7 @@ def fig_loss():
 def fig_metrics():
     base_dir = OUT / "_base"
     base = dev_metrics(base_dir / "base_dev.judged.jsonl", base_dir / "mmlu_base.json")
-    panels = [("asr", "(a) Attack success rate ↓", "ASR on harmful prompts (%)"),
+    panels = [("asr", "(a) Attack success rate ↓", "Attack success rate (%)"),
               ("advb", "(b) Over-refusal ↓", "Refusal on adversarial benign (%)"),
               ("mmlu", "(c) Capability ↑", "MMLU accuracy (%)")]
     fig, axes = plt.subplots(1, 3, figsize=(11, 3.3))
