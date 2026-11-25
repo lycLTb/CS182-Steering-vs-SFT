@@ -19,6 +19,24 @@ Topic: where to put LoRA in linear-attention / SSM / hybrid models (non-trivial 
   Biderman et al. 2024 (*LoRA Learns Less and Forgets Less*), Thinking Machines 2025 (*LoRA Without Regret*).
 - Verify arXiv IDs of any further papers before citing (MambaPEFT, S0 Tuning, etc.).
 
+## Report structure (agreed)
+- Shared section for all four methods, written once: experimental setup (model, data, benchmarks, judge,
+  decoding), the constant-LR checkpoint mechanism, and the FLOPs convention.
+- LoRA section, kept short: SFT + loss, LoRA, which layers on the hybrid model; hyperparameter tuning;
+  target-module experiment; LoRA-specific results; in progress; limitations.
+- Figures: one training-loss figure (each run is one curve; budgets are points on it);
+  one metrics-vs-FLOPs figure with small-multiple panels (one per metric/benchmark), methods as colors,
+  log-x, base as a reference line. No dual axes; MMLU and MT-Bench in separate panels.
+- Script: `scripts/plot_report.py` → `figures/lora_train_loss.png`, `figures/lora_dev_vs_flops.png`.
+- Draft: `doc/report_draft_lora.md`.
+
+To confirm with teammates:
+- Move the checkpoint mechanism and FLOPs into the shared section (soft prompt uses both too).
+- Soft prompt has only 1000/2000/4000 budgets; small budgets needed for a shared log-x figure.
+- Tuning budget differs (soft prompt 4 configs; LoRA 6 LRs + 3 target configs + planned re-sweep):
+  state per-method counts in the shared setup.
+- Joint figures across methods (soft prompt figures are currently soft-prompt only); shared loss figure.
+
 ## Method (SFT is covered in class → keep the SFT objective brief)
 - Model: Qwen3.5-0.8B, hybrid architecture: 24 layers = 18 Gated DeltaNet + 6 full attention; tied embeddings.
 - LoRA: W' = W + (α/r)·BA, base frozen (bf16), adapters fp32; r = 16, α = 32.
