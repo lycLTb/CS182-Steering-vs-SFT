@@ -8,7 +8,7 @@ model with hidden size $d$, and let $E(x) \in \mathbb{R}^{T \times d}$ be the em
 of a request $x$ formatted with the model's chat template. We learn a soft prompt
 $P \in \mathbb{R}^{n \times d}$ and place it in front of the embedded request:
 
-$$\tilde{x} = [\,P\,;\,E(x)\,], \tag{1}$$
+$$\tilde{x} = [\,P\,;\,E(x)\,] \qquad (1)$$
 
 where $[\,\cdot\,;\,\cdot\,]$ denotes concatenation along the sequence dimension. All model parameters
 $\theta$ stay frozen, so $P$ is the only trainable quantity: $n \cdot d = 20 \times 1{,}024 = 20{,}480$
@@ -18,7 +18,7 @@ We train $P$ on prompt–response pairs $(x, y)$ in which harmful requests are p
 benign requests with helpful answers. The loss is the response-only negative log-likelihood of the
 model with the soft prompt prepended,
 
-$$\mathcal{L}(P) = -\,\mathbb{E}_{(x,y)}\Big[\frac{1}{|y|}\sum_{t=1}^{|y|} \log p_\theta\big(y_t \mid P, x, y_{<t}\big)\Big], \tag{2}$$
+$$\mathcal{L}(P) = -\,\mathbb{E}_{(x,y)}\Big[\frac{1}{|y|}\sum_{t=1}^{|y|} \log p_\theta\big(y_t \mid P, x, y_{<t}\big)\Big] \qquad (2)$$
 
 which is the same supervised objective used for LoRA and learned steering. Because $P$ enters at the
 input, gradients must propagate back through every layer of the frozen network, but no weight
