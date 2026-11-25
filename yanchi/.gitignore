@@ -14,3 +14,4 @@ outputs/
 __pycache__/
 *.pyc
 *:Zone.Identifier
+.agent/
