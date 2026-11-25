@@ -1,11 +1,5 @@
 # Soft Prompt Tuning: Method and Experiments
 
-English version first, Chinese version below.
-
----
-
-## English
-
 ### Method
 
 Soft prompt tuning adapts a frozen language model by learning a small set of continuous input
