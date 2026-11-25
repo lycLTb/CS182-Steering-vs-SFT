@@ -131,8 +131,8 @@ def plot_all(args, F, R):
 
     # 1) safety
     fig, ax = plt.subplots(figsize=(6, 4))
-    lines_vs_flops(ax, X, R, ["HarmBench ASR", "WildJailbreak ASR", "XSTest-unsafe ASR"],
-                   ["HarmBench", "WildJailbreak (unseen jailbreaks)", "XSTest unsafe"], "Attack success rate (%)  ↓")
+    lines_vs_flops(ax, X, R, ["HarmBench ASR", "WildJailbreak ASR"],
+                   ["HarmBench", "WildJailbreak (unseen jailbreaks)"], "Attack success rate (%)  ↓")
     ax.set_ylim(bottom=0)
     ax.set_title("Safety vs. training compute", pad=18)
     ax.legend(loc="upper right")
