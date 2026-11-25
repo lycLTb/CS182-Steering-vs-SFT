@@ -205,25 +205,31 @@ At $\alpha = 1$, the attack success rate on the validation split fell by 2.5 per
 | 1.0 | 13.5 | 30.0 |
 | 2.0 | 10.5 | 57.5 |
 
-`[PLACEHOLDER: DoM figures (validation strength sweep; held-out comparison).]`
+![WildJailbreak development ASR and benign refusal rates across steering strengths](figures/wildjailbreak_dev.png)
+
+*Figure 2: WildJailbreak validation rates across DoM steering strengths. Dashed lines mark the baseline. Bars show marginal 95% Wilson intervals for each rate (200 prompts per class), conditional on one fitted direction.*
+
+![Held-out rates for baseline and DoM at alpha 1.0 with paired confidence intervals for the changes](figures/heldout_comparison.png)
+
+*Figure 3: Held-out rates for the baseline and DoM at $\alpha = 1$. Δ is the DoM rate minus the baseline rate. Percentile 95% confidence intervals for the differences use 20,000 resamples of matched prompt pairs within each benchmark and prompt class (HarmBench 200, XSTest harmful 200, XSTest benign 250). The intervals quantify prompt-level variation for the fixed run and judge.*
 
 ### 5.5 Where to apply LoRA
 
-Figure 2 compares the three placements across budgets, all using lr $2\times10^{-4}$ and the same data in the same order.
+Figure 4 compares the three placements across budgets, all using lr $2\times10^{-4}$ and the same data in the same order.
 
 ![](../../yanchi/figures/lora_dev_vs_flops.png)
 
-*Figure 2: Validation results vs. training compute for three LoRA placements. (a) Attack success rate on harmful prompts (n = 200). (b) Refusal rate on adversarial benign prompts (n = 100), the category where over-refusal concentrates. (c) MMLU accuracy (n = 1,000). The point at 0 PFLOPs is the base model. Error bars are 95% Wilson intervals over evaluation prompts. `[IN PROGRESS]` attn+GDN has so far been evaluated only at 1,000, 2,000 and 4,000 examples.*
+*Figure 4: Validation results vs. training compute for three LoRA placements. (a) Attack success rate on harmful prompts (n = 200). (b) Refusal rate on adversarial benign prompts (n = 100), the category where over-refusal concentrates. (c) MMLU accuracy (n = 1,000). The point at 0 PFLOPs is the base model. Error bars are 95% Wilson intervals over evaluation prompts. `[IN PROGRESS]` attn+GDN has so far been evaluated only at 1,000, 2,000 and 4,000 examples.*
 
 Softmax-only learns more slowly: its attack success rate is still 7.0% at 128 examples, where all-linear reaches 0%, and its adversarial-benign refusal peaks later and remains at 55% at 2,000 examples against 30% for all-linear (attn+GDN, at 39%, is within noise of all-linear). This is the opposite of Borobia et al. [22] on the same model, which we suspect reflects the different task.
 
 ### 5.6 Training curves
 
-Figure 3 shows the training loss. Training runs for one epoch, so every batch is unseen when its loss is computed, and the training loss can be seen as a held-out loss.
+Figure 5 shows the training loss. Training runs for one epoch, so every batch is unseen when its loss is computed, and the training loss can be seen as a held-out loss.
 
 ![](../../yanchi/figures/lora_train_loss.png) ![](../../shenghe_shao/figures/train_loss.png) ![](../../Jia_V1/learned_steering/figures/ls_train_loss.png)
 
-*Figure 3: Training loss on response tokens. (a) The three LoRA placements at lr $2\times10^{-4}$. (b) Soft prompt configurations. (c) Learned steering, preliminary run. `[IN PROGRESS]` one figure with shared axes.*
+*Figure 5: Training loss on response tokens. (a) The three LoRA placements at lr $2\times10^{-4}$. (b) Soft prompt configurations. (c) Learned steering, preliminary run. `[IN PROGRESS]` one figure with shared axes.*
 
 For learned steering, the loss falls from 1.78 to about 1.63 within the first 250 examples and then stays flat through both epochs, and the vector norm stops growing after about 500 examples. Later checkpoints differ in direction rather than in fit, driven by the most recent examples, which explains the swings in Sections 5.1 and 5.2.
 
