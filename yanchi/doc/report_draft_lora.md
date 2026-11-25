@@ -64,7 +64,7 @@ number of tokens. The LoRA term adds about 1% over the soft prompt at the same n
 ### X.1 Setup
 `[SHARED]` Model, data, benchmarks, judge and decoding settings are given in Section Y. Hyperparameters and
 placements are chosen on the validation split (400 prompts, 100 for each of vanilla/adversarial × harmful/benign).
-The test sets are evaluated once, after all choices are fixed. Error bars are 95% Wilson score intervals.
+The test sets are evaluated once, after all choices are fixed (`[IN PROGRESS]` not yet run). Error bars are 95% Wilson score intervals.
 We use these instead of ±1 SE because several rates are near 0%, where the normal approximation breaks down.
 We use lr 2e-4 for all LoRA runs, chosen by a small, non-exhaustive learning-rate search on the validation split
 (Appendix A). `[IN PROGRESS]` The search will be repeated for the final placement.
@@ -82,8 +82,9 @@ evaluated only at 1000, 2000 and 4000 examples; its segment from the base model 
 measured.*
 
 ### X.3 Results
-`[IN PROGRESS]` Test-set results (HarmBench, WildJailbreak, XSTest, MMLU, MT-Bench) for the final
-configuration, plotted with the other methods in the shared figure.
+`[IN PROGRESS]` We have not yet evaluated on the test sets. All results in this section are on the
+400-prompt validation split, which was also used to choose the learning rate and placement. Test-set results
+(HarmBench, WildJailbreak, XSTest, MMLU, MT-Bench) for the final configuration will replace them.
 
 On the validation split, three patterns stand out (Figure 1).
 
