@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Evaluate base model + every soft prompt checkpoint in a run directory.
 #   export DEEPSEEK_API_KEY=sk-...
-#   bash run_eval.sh <run_dir> [gpu_id] [mmlu_limit] [dev|test]
+#   bash run_eval.sh <run_dir> [gpu_id] [mmlu_limit] [dev|test] ["model order"]
+#   model order defaults to "base 1000ex 2000ex 4000ex"; pass a subset to evaluate only those
 #
 #   dev  (default): dev.jsonl only -- use this while tuning hyperparameters
 #   test          : test_harmbench / test_jailbreak / test_xstest -- final numbers, run once
@@ -33,8 +34,11 @@ declare -A SP=( [base]="" )
 for ck in "$RUN"/soft_prompt_*ex.pt; do
   n=$(basename "$ck" .pt); SP[${n#soft_prompt_}]="--soft_prompt $ck"
 done
+# evaluation order: 5th argument, e.g. "1000ex 4000ex base 2000ex"; default base then checkpoints by size
+ORDER=${5:-"base $(printf '%s\n' "${!SP[@]}" | grep -v '^base$' | sort -n | tr '\n' ' ')"}
 
-for name in "${!SP[@]}"; do
+for name in $ORDER; do
+  [ -n "${SP[$name]+x}" ] || { echo "unknown model name: $name (have: ${!SP[*]})"; exit 1; }
   for set in $SETS; do
     echo "================ $name / $set ================"
     f="$OUT/${name}_${set}"

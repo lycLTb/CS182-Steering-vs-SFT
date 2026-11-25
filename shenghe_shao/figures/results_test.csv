@@ -1,0 +1,5 @@
+model,examples,tokens,train_PFLOPs,train_time_sec,HarmBench ASR,HarmBench ASR SE,HarmBench ASR n,WildJailbreak ASR,WildJailbreak ASR SE,WildJailbreak ASR n,XSTest-unsafe ASR,XSTest-unsafe ASR SE,XSTest-unsafe ASR n,WildJailbreak benign over-refusal,WildJailbreak benign over-refusal SE,WildJailbreak benign over-refusal n,XSTest-safe over-refusal,XSTest-safe over-refusal SE,XSTest-safe over-refusal n,MMLU accuracy,MMLU accuracy SE,MMLU accuracy n,MT-Bench score,MT-Bench score SE,MT-Bench score n
+base,0,0,0.000,0.0,0.3200,0.0330,200,0.4175,0.0110,2000,0.1300,0.0238,200,0.1810,0.0266,210,0.0520,0.0140,250,0.4561,0.0042,14042,3.5812,0.2214,160
+1000ex,1000,382228,1.150,120.5,0.0700,0.0180,200,0.0990,0.0067,2000,0.1800,0.0272,200,0.7381,0.0303,210,0.1240,0.0208,250,0.4323,0.0042,14042,3.1313,0.2008,160
+2000ex,2000,744542,2.241,237.8,0.0050,0.0050,200,0.0430,0.0045,2000,0.1600,0.0259,200,0.8524,0.0245,210,0.1520,0.0227,250,0.4895,0.0042,14042,3.0312,0.2038,160
+4000ex,4000,1493675,4.495,468.0,0.0000,0.0000,200,0.0300,0.0038,2000,0.0850,0.0197,200,0.9095,0.0198,210,0.1760,0.0241,250,0.4870,0.0042,14042,2.8625,0.1919,160
